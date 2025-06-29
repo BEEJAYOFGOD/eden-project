@@ -218,7 +218,7 @@ const CropSelection = () => {
         setShowModal(false);
     };
 
-    // Detailed crop analysis using calendar data and weather conditions
+    // Enhanced crop analysis using data.json for accurate recommendations
     const getDetailedCropAnalysis = (cropId) => {
         const crop = crops.find((c) => c.id === cropId);
         const calendarCrop = calendarRecommendations.find(
@@ -234,6 +234,11 @@ const CropSelection = () => {
         // Convert hourly rainfall to daily estimate
         const dailyRainfall = rainfall * 24;
 
+        // Get region-specific data from data.json
+        const region = determineRegion(locationData);
+        const currentMonth = getCurrentMonth();
+        const cropData = seasonalInfo?.crops?.[cropId] || null;
+
         let analysis = {
             type: "success",
             title: "Good Planting Conditions",
@@ -244,25 +249,120 @@ const CropSelection = () => {
         let warnings = [];
         let recommendations = [];
 
-        // Calendar-based analysis
-        if (calendarCrop) {
-            if (calendarCrop.isPlantingMonth) {
-                conditions.push("🌱 Perfect planting season");
-                recommendations.push(
-                    "This is the optimal time to plant " + crop.name
+        // Enhanced analysis using data.json
+        if (cropData) {
+            // Check planting season
+            const isPlantingSeason =
+                cropData.planting_months.includes(currentMonth);
+            if (isPlantingSeason) {
+                conditions.push(
+                    `🌱 ${crop.name} is in optimal planting season for ${region} region`
+                );
+                conditions.push(
+                    "📅 Current month is ideal for planting this crop"
                 );
             } else {
-                const nextMonth = calendarCrop.plantingMonths[0];
-                if (nextMonth) {
-                    warnings.push("⏰ Not ideal planting month");
-                    recommendations.push(`Best planting time: ${nextMonth}`);
-                }
+                warnings.push(
+                    `⏰ ${crop.name} is not in optimal planting season`
+                );
+                const plantingMonths = cropData.planting_months
+                    .map((m) => seasonalInfo?.months?.[m] || `Month ${m}`)
+                    .join(", ");
+                recommendations.push(
+                    `📅 Best planting months: ${plantingMonths}`
+                );
             }
 
-            if (calendarCrop.weatherSuitable) {
-                conditions.push("🌤️ Weather conditions favorable");
+            // Temperature analysis
+            if (
+                currentTemp >= cropData.min_temp &&
+                currentTemp <= cropData.max_temp
+            ) {
+                conditions.push(
+                    `🌡️ Temperature (${currentTemp.toFixed(
+                        1
+                    )}°C) is optimal for ${crop.name}`
+                );
+            } else if (currentTemp < cropData.min_temp) {
+                warnings.push(
+                    `🥶 Temperature (${currentTemp.toFixed(
+                        1
+                    )}°C) is below optimal range (${cropData.min_temp}-${
+                        cropData.max_temp
+                    }°C)`
+                );
+                recommendations.push(
+                    "🏠 Consider greenhouse cultivation or wait for warmer weather"
+                );
             } else {
-                warnings.push("⚠️ Weather conditions challenging");
+                warnings.push(
+                    `🔥 Temperature (${currentTemp.toFixed(
+                        1
+                    )}°C) is above optimal range (${cropData.min_temp}-${
+                        cropData.max_temp
+                    }°C)`
+                );
+                recommendations.push(
+                    "🌳 Provide shade or wait for cooler weather"
+                );
+            }
+
+            // Rainfall analysis
+            const monthlyRainfall = dailyRainfall * 30; // Rough monthly estimate
+            if (
+                monthlyRainfall >= cropData.min_rain &&
+                monthlyRainfall <= cropData.max_rain
+            ) {
+                conditions.push(
+                    `💧 Rainfall levels are suitable for ${crop.name}`
+                );
+            } else if (monthlyRainfall < cropData.min_rain) {
+                warnings.push(
+                    `☔ Insufficient rainfall for optimal ${crop.name} growth`
+                );
+                recommendations.push(
+                    "💦 Consider irrigation or wait for rainy season"
+                );
+            } else {
+                warnings.push(
+                    `🌊 Excessive rainfall may affect ${crop.name} growth`
+                );
+                recommendations.push(
+                    "🚰 Ensure proper drainage and disease prevention"
+                );
+            }
+
+            // Regional flood risk analysis
+            const floodRisk = seasonalInfo?.flood_risk?.includes(currentMonth);
+            if (floodRisk) {
+                warnings.push("🌊 High flood risk this month in your region");
+                recommendations.push(
+                    "🏔️ Consider elevated planting or drainage systems"
+                );
+            }
+        } else {
+            // Fallback to calendar-based analysis
+            if (calendarCrop) {
+                if (calendarCrop.isPlantingMonth) {
+                    conditions.push("🌱 Perfect planting season");
+                    recommendations.push(
+                        "This is the optimal time to plant " + crop.name
+                    );
+                } else {
+                    const nextMonth = calendarCrop.plantingMonths[0];
+                    if (nextMonth) {
+                        warnings.push("⏰ Not ideal planting month");
+                        recommendations.push(
+                            `Best planting time: ${nextMonth}`
+                        );
+                    }
+                }
+
+                if (calendarCrop.weatherSuitable) {
+                    conditions.push("🌤️ Weather conditions favorable");
+                } else {
+                    warnings.push("⚠️ Weather conditions challenging");
+                }
             }
         }
 
@@ -378,17 +478,38 @@ const CropSelection = () => {
 
         // Determine overall analysis type based on data.json integration
         const totalFactors = conditions.length + warnings.length;
-        const warningRatio = warnings.length / totalFactors;
 
-        if (warningRatio >= 0.7) {
-            analysis.type = "challenging";
-            analysis.title = "Challenging Conditions - Proceed with Caution";
-        } else if (warningRatio >= 0.3) {
+        // Handle case where no factors are available
+        if (totalFactors === 0) {
             analysis.type = "mixed";
-            analysis.title = "Mixed Conditions - Some Precautions Needed";
+            analysis.title = "Limited Information Available";
         } else {
-            analysis.type = "positive";
-            analysis.title = "Excellent Planting Conditions!";
+            const warningRatio = warnings.length / totalFactors;
+
+            if (warningRatio >= 0.7) {
+                analysis.type = "challenging";
+                analysis.title =
+                    "Challenging Conditions - Proceed with Caution";
+            } else if (warningRatio >= 0.3) {
+                analysis.type = "mixed";
+                analysis.title = "Mixed Conditions - Some Precautions Needed";
+            } else {
+                analysis.type = "positive";
+                analysis.title = "Excellent Planting Conditions!";
+            }
+        }
+
+        // Ensure we have at least some basic analysis
+        if (conditions.length === 0 && warnings.length === 0) {
+            conditions.push("Basic weather data available for analysis");
+            if (weatherData) {
+                conditions.push(
+                    `Current temperature: ${currentTemp.toFixed(1)}°C`
+                );
+                if (humidity) {
+                    conditions.push(`Humidity level: ${humidity}%`);
+                }
+            }
         }
 
         // Build comprehensive message
@@ -450,7 +571,109 @@ const CropSelection = () => {
         return recommended;
     };
 
+    // Get comprehensive area-wide crop recommendations using data.json
+    const getAreaCropRecommendations = () => {
+        if (!seasonalInfo || !locationData) return null;
+
+        const region = determineRegion(locationData);
+        const currentMonth = getCurrentMonth();
+        const currentTemp = weatherData?.main?.temp || 25;
+        const dailyRainfall = (weatherData?.rain?.["1h"] || 0) * 24;
+        const monthlyRainfall = dailyRainfall * 30;
+
+        const allCrops = seasonalInfo.crops || {};
+        const recommendations = {
+            excellent: [],
+            good: [],
+            challenging: [],
+        };
+
+        Object.entries(allCrops).forEach(([cropId, cropData]) => {
+            const crop = crops.find((c) => c.id === cropId);
+            if (!crop) return;
+
+            let score = 0;
+            let factors = 0;
+
+            // Planting season score
+            if (cropData.planting_months.includes(currentMonth)) {
+                score += 3;
+            } else {
+                score -= 1;
+            }
+            factors++;
+
+            // Temperature score
+            if (
+                currentTemp >= cropData.min_temp &&
+                currentTemp <= cropData.max_temp
+            ) {
+                score += 2;
+            } else if (
+                Math.abs(
+                    currentTemp - (cropData.min_temp + cropData.max_temp) / 2
+                ) <= 5
+            ) {
+                score += 1;
+            } else {
+                score -= 1;
+            }
+            factors++;
+
+            // Rainfall score
+            if (
+                monthlyRainfall >= cropData.min_rain &&
+                monthlyRainfall <= cropData.max_rain
+            ) {
+                score += 2;
+            } else if (
+                monthlyRainfall >= cropData.min_rain * 0.8 &&
+                monthlyRainfall <= cropData.max_rain * 1.2
+            ) {
+                score += 1;
+            } else {
+                score -= 1;
+            }
+            factors++;
+
+            // Flood risk penalty
+            if (seasonalInfo.flood_risk?.includes(currentMonth)) {
+                score -= 1;
+            }
+
+            const avgScore = score / factors;
+            const cropInfo = {
+                id: cropId,
+                name: crop.name,
+                score: avgScore,
+                image: crop.image,
+            };
+
+            if (avgScore >= 1.5) {
+                recommendations.excellent.push(cropInfo);
+            } else if (avgScore >= 0.5) {
+                recommendations.good.push(cropInfo);
+            } else {
+                recommendations.challenging.push(cropInfo);
+            }
+        });
+
+        // Sort by score
+        recommendations.excellent.sort((a, b) => b.score - a.score);
+        recommendations.good.sort((a, b) => b.score - a.score);
+        recommendations.challenging.sort((a, b) => b.score - a.score);
+
+        return {
+            region,
+            currentMonth:
+                seasonalInfo.months?.[currentMonth] || `Month ${currentMonth}`,
+            recommendations,
+            totalCrops: Object.keys(allCrops).length,
+        };
+    };
+
     const recommendedCrops = getRecommendedCrops();
+    const areaRecommendations = getAreaCropRecommendations();
 
     return (
         <div className="min-h-screen bg-gray-100 flex flex-col">

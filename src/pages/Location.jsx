@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { locationStorage, weatherStorage } from "../utils/localStorage";
 import {
-    ChevronDown,
     MapPin,
     ArrowLeft,
     Sun,
@@ -21,7 +20,6 @@ import edenLogo from "../assets/icons/EDEN LOGO 1.png";
 const Location = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const [selectedLocation, setSelectedLocation] = useState("");
     const [detectedLocation, setDetectedLocation] = useState(null);
     const [weatherData, setWeatherData] = useState(null);
     const [weatherLoading, setWeatherLoading] = useState(false);
@@ -242,9 +240,7 @@ const Location = () => {
                 locationStorage.save(locationData);
             }
 
-            // Pre-select the detected location if it matches our options
-            const detectedLocationString = `${locationData.city}, ${locationData.state}, ${locationData.country}`;
-            setSelectedLocation(detectedLocationString);
+            // Location detected and ready for use
 
             // Use stored weather data if available and recent
             if (storedWeatherData && !routeLocationData) {
@@ -291,7 +287,7 @@ const Location = () => {
 
                     {/* Title */}
                     <h1 className="text-xl font-semibold text-gray-800 text-center mb-8">
-                        Select Your Location
+                        Detect Your Location
                     </h1>
 
                     {/* Detected Location Display */}
@@ -543,79 +539,27 @@ const Location = () => {
                         </div>
                     )}
 
-                    {/* Location Selection */}
-                    <div className="mb-8">
-                        <label className="block text-gray-700 text-sm font-medium mb-3">
-                            {detectedLocation
-                                ? "Confirm or change your location"
-                                : "Choose your location"}
-                        </label>
-                        <div className="relative">
-                            <select
-                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-700"
-                                value={selectedLocation}
-                                onChange={(e) =>
-                                    setSelectedLocation(e.target.value)
-                                }
-                            >
-                                <option value="">Choose your location</option>
-                                {detectedLocation && (
-                                    <option
-                                        value={`${detectedLocation.city}, ${detectedLocation.state}, ${detectedLocation.country}`}
-                                    >
-                                        {detectedLocation.city},{" "}
-                                        {detectedLocation.state},{" "}
-                                        {detectedLocation.country} (Detected)
-                                    </option>
-                                )}
-                                <option value="Lagos, Lagos State, Nigeria">
-                                    Lagos, Lagos State, Nigeria
-                                </option>
-                                <option value="Abuja, FCT, Nigeria">
-                                    Abuja, FCT, Nigeria
-                                </option>
-                                <option value="Kano, Kano State, Nigeria">
-                                    Kano, Kano State, Nigeria
-                                </option>
-                                <option value="Ibadan, Oyo State, Nigeria">
-                                    Ibadan, Oyo State, Nigeria
-                                </option>
-                                <option value="Port Harcourt, Rivers State, Nigeria">
-                                    Port Harcourt, Rivers State, Nigeria
-                                </option>
-                                <option value="Kaduna, Kaduna State, Nigeria">
-                                    Kaduna, Kaduna State, Nigeria
-                                </option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                        </div>
-                    </div>
-
                     {/* Continue Button */}
                     <button
                         onClick={() => {
-                            if (selectedLocation) {
-                                // Update location data with selected location
-                                const updatedLocationData = {
-                                    ...detectedLocation,
-                                    selectedLocationString: selectedLocation,
-                                };
-
-                                // Save updated location data
-                                locationStorage.save(updatedLocationData);
+                            if (detectedLocation) {
+                                // Save detected location data
+                                locationStorage.save(detectedLocation);
 
                                 // Navigate to crop selection
                                 navigate("/crops", {
                                     state: {
-                                        locationData: updatedLocationData,
+                                        locationData: detectedLocation,
                                         weatherData,
                                     },
                                 });
                             } else {
-                                alert("Please select a location to continue");
+                                alert(
+                                    "Please allow location access to continue"
+                                );
                             }
                         }}
-                        disabled={!selectedLocation}
+                        disabled={!detectedLocation}
                         className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Continue to Crop Selection
