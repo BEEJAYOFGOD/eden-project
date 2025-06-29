@@ -312,51 +312,51 @@ const Landing = () => {
             </div>
 
             {/* How It Works Section */}
-            <div className="mb-16">
+            <div className="mb-16 px-4">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-12">
                     How EDEN Works
                 </h2>
-                <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                    <div className="text-center">
+                <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                    <div className="text-center px-4">
                         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span className="text-2xl font-bold text-green-600">
                                 1
                             </span>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
                             📍 Share Your Location
                         </h3>
-                        <p className="text-gray-600 w-lg mx-auto ">
+                        <p className="text-gray-600 text-sm sm:text-base max-w-xs mx-auto leading-relaxed">
                             Tell us your village, LGA, or state.
                             <br /> We'll get weather data for your exact area.
                         </p>
                     </div>
 
-                    <div className="text-center">
+                    <div className="text-center px-4">
                         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span className="text-2xl font-bold text-green-600">
                                 2
                             </span>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
                             🌾 Choose Your Crops
                         </h3>
-                        <p className="text-gray-600  w-xs mx-auto">
+                        <p className="text-gray-600 text-sm sm:text-base max-w-xs mx-auto leading-relaxed">
                             Select what you want to grow - maize, rice, cassava,
                             yam, or any other crop.
                         </p>
                     </div>
 
-                    <div className="text-center">
+                    <div className="text-center px-4">
                         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span className="text-2xl font-bold text-green-600">
                                 3
                             </span>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
                             💬 Get WhatsApp Alerts
                         </h3>
-                        <p className="text-gray-600  w-xs mx-auto">
+                        <p className="text-gray-600 text-sm sm:text-base max-w-xs mx-auto leading-relaxed">
                             Receive daily tips, weather alerts, and planting
                             advice directly on WhatsApp.
                         </p>
