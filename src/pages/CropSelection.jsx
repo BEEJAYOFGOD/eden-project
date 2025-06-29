@@ -36,15 +36,24 @@ import yamImg from "../assets/crops/yam tubers 2.png";
 const CropSelection = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [selectedCrop, setSelectedCrop] = useState(null);
+
+    // Use persisted state for better user experience across page refreshes
+    const {
+        selectedCrop,
+        setSelectedCrop,
+        calendarRecommendations,
+        setCalendarRecommendations,
+        seasonalInfo,
+        setSeasonalInfo,
+    } = useCropSelectionState();
+
+    // Regular state for UI components
     const [locationData, setLocationData] = useState(null);
     const [weatherData, setWeatherData] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState("success");
     const [modalTitle, setModalTitle] = useState("");
     const [modalMessage, setModalMessage] = useState("");
-    const [calendarRecommendations, setCalendarRecommendations] = useState([]);
-    const [seasonalInfo, setSeasonalInfo] = useState(null);
 
     // Crop data with images and information
     const crops = [
@@ -152,7 +161,14 @@ const CropSelection = () => {
             console.log("Calendar recommendations:", recommendations);
             console.log("Seasonal info:", seasonal);
         }
-    }, [location.state, weatherData, locationData]);
+    }, [
+        location.state,
+        weatherData,
+        locationData,
+        setCalendarRecommendations,
+        setSeasonalInfo,
+        setSelectedCrop,
+    ]);
 
     const toggleCropSelection = (cropId) => {
         // If the same crop is clicked, deselect it; otherwise select the new crop

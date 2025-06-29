@@ -5,6 +5,7 @@ import {
     Leaf,
     Sun,
     CloudRain,
+    X,
 } from "lucide-react";
 
 const CropSelectionModal = ({
@@ -23,15 +24,15 @@ const CropSelectionModal = ({
         switch (type) {
             case "success":
             case "positive":
-                return <CheckCircle className="w-10 h-10 text-white" />;
+                return <CheckCircle className="w-full h-full" />;
             case "error":
             case "challenging":
-                return <XCircle className="w-10 h-10 text-white" />;
+                return <XCircle className="w-full h-full" />;
             case "warning":
             case "mixed":
-                return <AlertTriangle className="w-10 h-10 text-white" />;
+                return <AlertTriangle className="w-full h-full" />;
             default:
-                return <CheckCircle className="w-10 h-10 text-white" />;
+                return <CheckCircle className="w-full h-full" />;
         }
     };
 
@@ -68,28 +69,44 @@ const CropSelectionModal = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div
+            className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50"
+            onClick={onClose}
+        >
             {/* Modal */}
-            <div className="relative bg-white rounded-2xl p-8 max-w-md w-full mx-4 text-center shadow-2xl">
+            <div
+                className="relative bg-white rounded-2xl p-4 sm:p-6 md:p-8 max-w-sm sm:max-w-md md:max-w-lg w-full mx-2 sm:mx-4 text-center shadow-2xl max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Close button for mobile */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-2 right-2 sm:top-4 sm:right-4 p-1 sm:p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Close modal"
+                >
+                    <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                </button>
                 {/* Icon */}
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                     <div
-                        className={`w-16 h-16 mx-auto ${getIconBgColor()} rounded-full flex items-center justify-center`}
+                        className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto ${getIconBgColor()} rounded-full flex items-center justify-center`}
                     >
-                        {getIcon()}
+                        <div className="w-6 h-6 sm:w-10 sm:h-10 text-white">
+                            {getIcon()}
+                        </div>
                     </div>
                 </div>
 
                 {/* Title */}
                 {title && (
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 px-2">
                         {title}
                     </h3>
                 )}
 
                 {/* Message */}
-                <div className="mb-6">
-                    <div className="text-gray-700 text-sm leading-relaxed text-left">
+                <div className="mb-4 sm:mb-6">
+                    <div className="text-gray-700 text-xs sm:text-sm leading-relaxed text-left px-1 sm:px-0">
                         {message.split("\n").map((line, index) => {
                             if (line.trim() === "") return <br key={index} />;
 
@@ -102,7 +119,7 @@ const CropSelectionModal = ({
                                 return (
                                     <div
                                         key={index}
-                                        className="font-semibold text-gray-800 mt-3 mb-1"
+                                        className="font-semibold text-gray-800 mt-2 sm:mt-3 mb-1 text-xs sm:text-sm"
                                     >
                                         {line}
                                     </div>
@@ -114,7 +131,7 @@ const CropSelectionModal = ({
                                 return (
                                     <div
                                         key={index}
-                                        className="ml-2 mb-1 text-gray-600"
+                                        className="ml-1 sm:ml-2 mb-1 text-gray-600 text-xs sm:text-sm leading-tight"
                                     >
                                         {line}
                                     </div>
@@ -126,7 +143,7 @@ const CropSelectionModal = ({
                                 return (
                                     <div
                                         key={index}
-                                        className="font-bold text-gray-900 mb-2"
+                                        className="font-bold text-gray-900 mb-2 text-sm sm:text-base"
                                     >
                                         {line}
                                     </div>
@@ -134,7 +151,10 @@ const CropSelectionModal = ({
                             }
 
                             return (
-                                <div key={index} className="mb-1">
+                                <div
+                                    key={index}
+                                    className="mb-1 text-xs sm:text-sm"
+                                >
                                     {line}
                                 </div>
                             );
@@ -143,11 +163,11 @@ const CropSelectionModal = ({
 
                     {/* Selected Crops List */}
                     {selectedCrops.length > 0 && (
-                        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm font-medium text-gray-600 mb-2">
+                        <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-gray-50 rounded-lg">
+                            <p className="text-xs sm:text-sm font-medium text-gray-600 mb-2">
                                 Selected Crops:
                             </p>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-1 sm:gap-2">
                                 {selectedCrops.map((crop, index) => (
                                     <span
                                         key={index}
@@ -162,18 +182,18 @@ const CropSelectionModal = ({
                 </div>
 
                 {/* Buttons */}
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 sm:mt-6">
                     {onConfirm && (
                         <button
                             onClick={onConfirm}
-                            className={`flex-1 ${getButtonColor()} text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg`}
+                            className={`flex-1 ${getButtonColor()} text-white font-medium py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-colors duration-200 shadow-lg text-sm sm:text-base`}
                         >
                             Continue
                         </button>
                     )}
                     <button
                         onClick={onClose}
-                        className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200"
+                        className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-colors duration-200 text-sm sm:text-base"
                     >
                         Close
                     </button>
