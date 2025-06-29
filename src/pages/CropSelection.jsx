@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Check, Leaf } from "lucide-react";
 import edenLogo from "../assets/icons/EDEN LOGO 1.png";
+import CropSelectionModal from "./modalComponent";
 import {
     cropsStorage,
     locationStorage,
@@ -24,6 +25,10 @@ const CropSelection = () => {
     const [selectedCrops, setSelectedCrops] = useState([]);
     const [locationData, setLocationData] = useState(null);
     const [weatherData, setWeatherData] = useState(null);
+    const [showModal, setShowModal] = useState(false);
+    const [modalType, setModalType] = useState("success");
+    const [modalTitle, setModalTitle] = useState("");
+    const [modalMessage, setModalMessage] = useState("");
 
     // Crop data with images and information
     const crops = [
@@ -132,13 +137,47 @@ const CropSelection = () => {
 
     const handleContinue = () => {
         if (selectedCrops.length === 0) {
-            alert("Please select at least one crop to continue");
+            setModalType("error");
+            setModalTitle("No Crops Selected");
+            setModalMessage(
+                "Please select at least one crop to continue with your farming plan."
+            );
+            setShowModal(true);
             return;
         }
 
         // Save final selection
         cropsStorage.save(selectedCrops);
 
+        // Check weather conditions and show appropriate modal
+        const currentTemp = weatherData?.main?.temp || 25;
+        const rainfall = weatherData?.rain?.["1h"] || 0;
+
+        if (rainfall > 5) {
+            setModalType("warning");
+            setModalTitle("Heavy Rain Expected");
+            setModalMessage(
+                "There's heavy rainfall expected. Consider waiting for better weather conditions before planting."
+            );
+        } else if (currentTemp < 20 || currentTemp > 35) {
+            setModalType("warning");
+            setModalTitle("Temperature Alert");
+            setModalMessage(
+                "Current temperature conditions may not be ideal for some crops. Please check individual crop requirements."
+            );
+        } else {
+            setModalType("success");
+            setModalTitle("Perfect Planting Conditions!");
+            setModalMessage(
+                "Weather conditions are favorable for planting your selected crops. It's a great time to start farming!"
+            );
+        }
+
+        setShowModal(true);
+    };
+
+    const handleModalConfirm = () => {
+        setShowModal(false);
         // Navigate to dashboard or next page
         navigate("/dashboard", {
             state: {
@@ -147,6 +186,10 @@ const CropSelection = () => {
                 selectedCrops,
             },
         });
+    };
+
+    const handleModalClose = () => {
+        setShowModal(false);
     };
 
     const getRecommendedCrops = () => {
@@ -327,6 +370,19 @@ const CropSelection = () => {
                     Continue with Selected Crops
                 </button>
             </div>
+
+            {/* Crop Selection Modal */}
+            <CropSelectionModal
+                isOpen={showModal}
+                onClose={handleModalClose}
+                onConfirm={handleModalConfirm}
+                type={modalType}
+                title={modalTitle}
+                message={modalMessage}
+                selectedCrops={selectedCrops.map(
+                    (crop) => crops.find((c) => c.id === crop)?.name || crop
+                )}
+            />
         </div>
     );
 };

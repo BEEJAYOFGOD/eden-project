@@ -24,6 +24,7 @@ import {
     Send,
 } from "lucide-react";
 import edenLogo from "../assets/icons/EDEN LOGO 1.png";
+import blackFarmerImg from "../assets/black farmer.png";
 import { waitlistStorage } from "../utils/localStorage";
 
 const Landing = () => {
@@ -182,8 +183,15 @@ const Landing = () => {
             </div>
 
             {/* Hero Section */}
-            <div className="max-w-7xl mx-auto px-4 py-16">
-                <div className="text-center mb-12">
+            <div className="max-w-7xl mx-auto px-4 py-16 relative">
+                {/* Background Image with Overlay */}
+                <div
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat rounded-2xl opacity-20"
+                    style={{ backgroundImage: `url(${blackFarmerImg})` }}
+                ></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-green-50/80 to-green-100/80 rounded-2xl"></div>
+
+                <div className="relative z-10 text-center mb-12">
                     <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
                         🌾 Farming Made Easy for
                         <span className="text-green-600 block">

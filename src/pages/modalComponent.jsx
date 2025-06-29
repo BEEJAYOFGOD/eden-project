@@ -1,89 +1,121 @@
-import { useState } from "react";
+import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
-export default function PlantSuccessModal() {
-    const [isOpen, setIsOpen] = useState(true);
+const CropSelectionModal = ({
+    isOpen,
+    onClose,
+    type = "success", // 'success', 'error', 'warning'
+    title,
+    message,
+    selectedCrops = [],
+    onConfirm,
+}) => {
+    if (!isOpen) return null;
 
-    const handleConfirm = () => {
-        setIsOpen(false);
-        // You can add additional logic here
+    const getIcon = () => {
+        switch (type) {
+            case "success":
+                return <CheckCircle className="w-10 h-10 text-white" />;
+            case "error":
+                return <XCircle className="w-10 h-10 text-white" />;
+            case "warning":
+                return <AlertTriangle className="w-10 h-10 text-white" />;
+            default:
+                return <CheckCircle className="w-10 h-10 text-white" />;
+        }
     };
 
-    const handleReopen = () => {
-        setIsOpen(true);
+    const getIconBgColor = () => {
+        switch (type) {
+            case "success":
+                return "bg-green-500";
+            case "error":
+                return "bg-red-500";
+            case "warning":
+                return "bg-yellow-500";
+            default:
+                return "bg-green-500";
+        }
+    };
+
+    const getButtonColor = () => {
+        switch (type) {
+            case "success":
+                return "bg-green-600 hover:bg-green-700 active:bg-green-800";
+            case "error":
+                return "bg-red-600 hover:bg-red-700 active:bg-red-800";
+            case "warning":
+                return "bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800";
+            default:
+                return "bg-green-600 hover:bg-green-700 active:bg-green-800";
+        }
     };
 
     return (
-        <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
-            {/* Background with blur effect */}
-            <div className="fixed inset-0 bg-gradient-to-b from-green-200/30 via-orange-200/30 to-green-300/30 backdrop-blur-sm z-0">
-                {/* Header - behind modal */}
-                <div className="absolute top-4 left-4 bg-white rounded-lg shadow-sm p-2 z-0">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-green-600 rounded flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">
-                                🌱
-                            </span>
-                        </div>
-                        <span className="text-green-600 font-semibold">
-                            EDEN
-                        </span>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            {/* Modal */}
+            <div className="relative bg-white rounded-2xl p-8 max-w-md w-full mx-4 text-center shadow-2xl">
+                {/* Icon */}
+                <div className="mb-6">
+                    <div
+                        className={`w-16 h-16 mx-auto ${getIconBgColor()} rounded-full flex items-center justify-center`}
+                    >
+                        {getIcon()}
                     </div>
                 </div>
-            </div>
 
-            {/* Modal */}
-            {isOpen && (
-                <div className="relative z-20 bg-white/95 backdrop-blur-sm rounded-3xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl">
-                    {/* Success Icon */}
-                    <div className="mb-6">
-                        <div className="w-16 h-16 mx-auto bg-green-500 rounded-full flex items-center justify-center">
-                            <svg
-                                className="w-10 h-10 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={3}
-                                    d="M5 13l4 4L19 7"
-                                />
-                            </svg>
+                {/* Title */}
+                {title && (
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">
+                        {title}
+                    </h3>
+                )}
+
+                {/* Message */}
+                <div className="mb-6">
+                    <p className="text-gray-700 text-base leading-relaxed">
+                        {message}
+                    </p>
+
+                    {/* Selected Crops List */}
+                    {selectedCrops.length > 0 && (
+                        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                            <p className="text-sm font-medium text-gray-600 mb-2">
+                                Selected Crops:
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedCrops.map((crop, index) => (
+                                    <span
+                                        key={index}
+                                        className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full"
+                                    >
+                                        {crop}
+                                    </span>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
+                </div>
 
-                    {/* Message */}
-                    <div className="mb-8">
-                        <p className="text-gray-800 text-lg font-medium leading-relaxed">
-                            It's a good time
-                            <br />
-                            to plant
-                            <span className="inline-block ml-2 text-2xl">
-                                😊
-                            </span>
-                        </p>
-                    </div>
-
-                    {/* Confirm Button */}
+                {/* Buttons */}
+                <div className="flex gap-3">
+                    {onConfirm && (
+                        <button
+                            onClick={onConfirm}
+                            className={`flex-1 ${getButtonColor()} text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg`}
+                        >
+                            Continue
+                        </button>
+                    )}
                     <button
-                        onClick={handleConfirm}
-                        className="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-medium py-3 px-6 rounded-full transition-colors duration-200 shadow-lg"
+                        onClick={onClose}
+                        className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200"
                     >
-                        Confirm
+                        Close
                     </button>
                 </div>
-            )}
-
-            {/* Button to reopen modal (for demo purposes) */}
-            {!isOpen && (
-                <button
-                    onClick={handleReopen}
-                    className="fixed bottom-4 right-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg"
-                >
-                    Show Modal
-                </button>
-            )}
+            </div>
         </div>
     );
-}
+};
+
+export default CropSelectionModal;
