@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { locationStorage, weatherStorage } from "../utils/localStorage";
 import {
-    Leaf,
     ChevronDown,
     MapPin,
     ArrowLeft,
@@ -12,10 +12,11 @@ import {
     Droplets,
     Wind,
     Eye,
-    Gauge,
+    CloudDrizzle,
     Loader2,
     AlertTriangle,
 } from "lucide-react";
+import edenLogo from "../assets/icons/EDEN LOGO 1.png";
 
 const Location = () => {
     const location = useLocation();
@@ -26,12 +27,8 @@ const Location = () => {
     const [weatherLoading, setWeatherLoading] = useState(false);
     const [weatherError, setWeatherError] = useState(null);
 
-    // OpenWeather API key - Get your free API key from https://openweathermap.org/api
-    // In production, this should be in environment variables
-    const OPENWEATHER_API_KEY = "your_api_key_here"; // Replace with your actual API key
-
-    // Demo mode - set to true to use mock data for testing without API key
-    const DEMO_MODE = true;
+    // OpenWeather API key
+    const OPENWEATHER_API_KEY = "7ac6fb57238337357fd4b67ae4f31df2";
 
     // Function to fetch weather data
     const fetchWeatherData = useCallback(
@@ -40,44 +37,60 @@ const Location = () => {
                 setWeatherLoading(true);
                 setWeatherError(null);
 
-                if (DEMO_MODE) {
-                    // Simulate API delay
-                    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-                    // Mock weather data for demo
-                    const mockData = {
-                        weather: [{ main: "Clear", description: "clear sky" }],
-                        main: {
-                            temp: 25.5,
-                            humidity: 65,
-                            pressure: 1013,
-                        },
-                        wind: {
-                            speed: 3.2,
-                        },
-                        visibility: 10000,
-                        name: detectedLocation?.city || "Demo City",
-                    };
-                    setWeatherData(mockData);
-                    return;
-                }
-
-                if (OPENWEATHER_API_KEY === "your_api_key_here") {
-                    throw new Error(
-                        "Please set your OpenWeather API key. Get one free at https://openweathermap.org/api"
-                    );
-                }
-
+                // Using One Call API 3.0 for comprehensive weather data including rainfall
                 const response = await fetch(
-                    `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=metric`
+                    `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=metric&exclude=minutely,alerts`
                 );
 
                 if (!response.ok) {
-                    throw new Error(`Weather API error: ${response.status}`);
+                    // Fallback to v2.5 if v3.0 fails (in case of subscription issues)
+                    const fallbackResponse = await fetch(
+                        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=metric`
+                    );
+
+                    if (!fallbackResponse.ok) {
+                        throw new Error(
+                            `Weather API error: ${fallbackResponse.status}`
+                        );
+                    }
+
+                    const fallbackData = await fallbackResponse.json();
+                    setWeatherData(fallbackData);
+                    return;
                 }
 
                 const data = await response.json();
-                setWeatherData(data);
+                // Transform v3.0 data to include rainfall and other enhanced data
+                const transformedData = {
+                    weather: [
+                        {
+                            main: data.current.weather[0].main,
+                            description: data.current.weather[0].description,
+                            icon: data.current.weather[0].icon,
+                        },
+                    ],
+                    main: {
+                        temp: data.current.temp,
+                        humidity: data.current.humidity,
+                        pressure: data.current.pressure,
+                        feels_like: data.current.feels_like,
+                    },
+                    wind: {
+                        speed: data.current.wind_speed,
+                        deg: data.current.wind_deg,
+                    },
+                    visibility: data.current.visibility,
+                    rain: data.current.rain || { "1h": 0 }, // Rainfall data from v3.0
+                    clouds: data.current.clouds,
+                    name: detectedLocation?.city || "Current Location",
+                    uvi: data.current.uvi, // UV Index from v3.0
+                    hourly: data.hourly ? data.hourly.slice(0, 24) : [], // Next 24 hours
+                    daily: data.daily ? data.daily.slice(0, 7) : [], // Next 7 days
+                };
+
+                setWeatherData(transformedData);
+                // Save weather data to localStorage
+                weatherStorage.save(transformedData);
             } catch (error) {
                 console.error("Weather fetch error:", error);
                 setWeatherError(
@@ -88,7 +101,7 @@ const Location = () => {
                 setWeatherLoading(false);
             }
         },
-        [detectedLocation, DEMO_MODE, OPENWEATHER_API_KEY]
+        [OPENWEATHER_API_KEY, detectedLocation?.city]
     );
 
     // Helper function to get weather icon based on weather condition
@@ -99,8 +112,17 @@ const Location = () => {
             case "clouds":
                 return <Cloud className={`${size} text-gray-500`} />;
             case "rain":
+                return <CloudRain className={`${size} text-blue-600`} />;
             case "drizzle":
-                return <CloudRain className={`${size} text-blue-500`} />;
+                return <CloudDrizzle className={`${size} text-blue-500`} />;
+            case "thunderstorm":
+                return <CloudRain className={`${size} text-purple-600`} />;
+            case "snow":
+                return <Cloud className={`${size} text-blue-300`} />;
+            case "mist":
+            case "fog":
+            case "haze":
+                return <Cloud className={`${size} text-gray-400`} />;
             default:
                 return <Sun className={`${size} text-yellow-500`} />;
         }
@@ -114,69 +136,120 @@ const Location = () => {
         const temp = weather.main?.temp;
         const humidity = weather.main?.humidity;
         const windSpeed = weather.wind?.speed;
+        const rainfall = weather.rain?.["1h"] || 0;
+        const uvIndex = weather.uvi;
 
         // Temperature recommendations
         if (temp < 15) {
             recommendations.push({
-                icon: <Thermometer className="w-5 h-5 text-blue-500" />,
+                icon: <Thermometer className="w-6 h-6 text-blue-500" />,
                 title: "Cool Weather",
                 description:
-                    "Good for cool-season crops like lettuce, spinach, and peas",
+                    "Perfect for cool-season crops like lettuce, spinach, peas, and broccoli",
             });
         } else if (temp > 30) {
             recommendations.push({
-                icon: <Thermometer className="w-5 h-5 text-red-500" />,
+                icon: <Thermometer className="w-6 h-6 text-red-500" />,
                 title: "Hot Weather",
                 description:
-                    "Ensure adequate irrigation. Good for heat-loving crops like tomatoes",
+                    "Ensure adequate irrigation. Ideal for heat-loving crops like tomatoes, peppers, and okra",
             });
         } else {
             recommendations.push({
-                icon: <Thermometer className="w-5 h-5 text-green-500" />,
+                icon: <Thermometer className="w-6 h-6 text-green-500" />,
                 title: "Optimal Temperature",
-                description: "Perfect conditions for most crops",
+                description:
+                    "Perfect conditions for most crops including beans, corn, and squash",
             });
         }
 
         // Humidity recommendations
         if (humidity > 80) {
             recommendations.push({
-                icon: <Droplets className="w-5 h-5 text-blue-500" />,
+                icon: <Droplets className="w-6 h-6 text-blue-500" />,
                 title: "High Humidity",
                 description:
-                    "Watch for fungal diseases. Ensure good air circulation",
+                    "Monitor for fungal diseases. Ensure good air circulation and avoid overhead watering",
             });
         } else if (humidity < 40) {
             recommendations.push({
-                icon: <Droplets className="w-5 h-5 text-orange-500" />,
+                icon: <Droplets className="w-6 h-6 text-orange-500" />,
                 title: "Low Humidity",
-                description: "Consider additional watering and mulching",
+                description:
+                    "Increase watering frequency and consider mulching to retain moisture",
+            });
+        }
+
+        // Rainfall recommendations
+        if (rainfall > 5) {
+            recommendations.push({
+                icon: <CloudDrizzle className="w-6 h-6 text-blue-600" />,
+                title: "Heavy Rainfall",
+                description:
+                    "Ensure proper drainage. Delay planting and harvesting activities",
+            });
+        } else if (rainfall > 0) {
+            recommendations.push({
+                icon: <CloudDrizzle className="w-6 h-6 text-green-600" />,
+                title: "Light Rain",
+                description:
+                    "Good natural irrigation. Reduce watering schedule accordingly",
+            });
+        }
+
+        // UV Index recommendations
+        if (uvIndex > 8) {
+            recommendations.push({
+                icon: <Sun className="w-6 h-6 text-red-500" />,
+                title: "Very High UV",
+                description:
+                    "Provide shade for sensitive crops. Work during early morning or evening",
+            });
+        } else if (uvIndex > 6) {
+            recommendations.push({
+                icon: <Sun className="w-6 h-6 text-orange-500" />,
+                title: "High UV",
+                description:
+                    "Monitor plants for sun stress. Consider shade cloth for delicate crops",
             });
         }
 
         // Wind recommendations
         if (windSpeed > 10) {
             recommendations.push({
-                icon: <Wind className="w-5 h-5 text-gray-600" />,
+                icon: <Wind className="w-6 h-6 text-gray-600" />,
                 title: "Windy Conditions",
-                description: "Protect young plants and check for wind damage",
+                description:
+                    "Stake tall plants and protect young seedlings from wind damage",
             });
         }
 
         return recommendations;
     };
 
-    // Get location data from router state
+    // Get location data from router state or localStorage
     useEffect(() => {
-        const locationData = location.state?.locationData;
+        const routeLocationData = location.state?.locationData;
+        const storedLocationData = locationStorage.get();
+        const storedWeatherData = weatherStorage.get();
+
+        const locationData = routeLocationData || storedLocationData;
+
         if (locationData) {
             setDetectedLocation(locationData);
+            // Save to localStorage if from route
+            if (routeLocationData) {
+                locationStorage.save(locationData);
+            }
+
             // Pre-select the detected location if it matches our options
             const detectedLocationString = `${locationData.city}, ${locationData.state}, ${locationData.country}`;
             setSelectedLocation(detectedLocationString);
 
-            // Fetch weather data if coordinates are available
-            if (locationData.latitude && locationData.longitude) {
+            // Use stored weather data if available and recent
+            if (storedWeatherData && !routeLocationData) {
+                setWeatherData(storedWeatherData);
+            } else if (locationData.latitude && locationData.longitude) {
                 fetchWeatherData(locationData.latitude, locationData.longitude);
             }
         }
@@ -205,10 +278,12 @@ const Location = () => {
                     {/* Logo */}
                     <div className="flex items-center justify-center mb-12">
                         <div className="flex items-center">
-                            <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center mr-2">
-                                <Leaf className="w-5 h-5 text-white" />
-                            </div>
-                            <span className="text-green-600 font-semibold text-lg">
+                            <img
+                                src={edenLogo}
+                                alt="EDEN Logo"
+                                className="w-12 h-18 mr-3"
+                            />
+                            <span className="text-green-600 font-bold text-2xl">
                                 EDEN
                             </span>
                         </div>
@@ -292,29 +367,40 @@ const Location = () => {
                                     </h3>
 
                                     {/* Weather Overview */}
-                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div className="grid grid-cols-2 gap-6 mb-6">
                                         <div className="flex items-center">
-                                            <Thermometer className="w-4 h-4 text-red-500 mr-2" />
+                                            <Thermometer className="w-8 h-8 text-red-500 mr-3" />
                                             <div>
                                                 <p className="text-sm text-gray-600">
                                                     Temperature
                                                 </p>
-                                                <p className="font-semibold">
+                                                <p className="font-bold text-lg">
                                                     {Math.round(
                                                         weatherData.main?.temp
                                                     )}
                                                     °C
                                                 </p>
+                                                {weatherData.main
+                                                    ?.feels_like && (
+                                                    <p className="text-xs text-gray-500">
+                                                        Feels like{" "}
+                                                        {Math.round(
+                                                            weatherData.main
+                                                                .feels_like
+                                                        )}
+                                                        °C
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
 
                                         <div className="flex items-center">
-                                            <Droplets className="w-4 h-4 text-blue-500 mr-2" />
+                                            <Droplets className="w-8 h-8 text-blue-500 mr-3" />
                                             <div>
                                                 <p className="text-sm text-gray-600">
                                                     Humidity
                                                 </p>
-                                                <p className="font-semibold">
+                                                <p className="font-bold text-lg">
                                                     {weatherData.main?.humidity}
                                                     %
                                                 </p>
@@ -322,12 +408,12 @@ const Location = () => {
                                         </div>
 
                                         <div className="flex items-center">
-                                            <Wind className="w-4 h-4 text-gray-600 mr-2" />
+                                            <Wind className="w-8 h-8 text-gray-600 mr-3" />
                                             <div>
                                                 <p className="text-sm text-gray-600">
                                                     Wind Speed
                                                 </p>
-                                                <p className="font-semibold">
+                                                <p className="font-bold text-lg">
                                                     {weatherData.wind?.speed}{" "}
                                                     m/s
                                                 </p>
@@ -335,12 +421,12 @@ const Location = () => {
                                         </div>
 
                                         <div className="flex items-center">
-                                            <Eye className="w-4 h-4 text-purple-500 mr-2" />
+                                            <Eye className="w-8 h-8 text-purple-500 mr-3" />
                                             <div>
                                                 <p className="text-sm text-gray-600">
                                                     Visibility
                                                 </p>
-                                                <p className="font-semibold">
+                                                <p className="font-bold text-lg">
                                                     {(
                                                         weatherData.visibility /
                                                         1000
@@ -349,6 +435,81 @@ const Location = () => {
                                                 </p>
                                             </div>
                                         </div>
+
+                                        {/* Rainfall Data - Enhanced */}
+                                        <div className="flex items-center">
+                                            {(() => {
+                                                const rainfall =
+                                                    weatherData.rain?.["1h"] ||
+                                                    0;
+                                                if (rainfall > 5) {
+                                                    return (
+                                                        <CloudRain className="w-8 h-8 text-blue-700 mr-3" />
+                                                    );
+                                                } else if (rainfall > 0) {
+                                                    return (
+                                                        <CloudDrizzle className="w-8 h-8 text-blue-500 mr-3" />
+                                                    );
+                                                } else {
+                                                    return (
+                                                        <Droplets className="w-8 h-8 text-blue-400 mr-3" />
+                                                    );
+                                                }
+                                            })()}
+                                            <div>
+                                                <p className="text-sm text-gray-600">
+                                                    Rainfall (1h)
+                                                </p>
+                                                <p className="font-bold text-lg text-blue-600">
+                                                    {weatherData.rain?.["1h"] ||
+                                                        0}{" "}
+                                                    mm
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    {(() => {
+                                                        const rainfall =
+                                                            weatherData.rain?.[
+                                                                "1h"
+                                                            ] || 0;
+                                                        if (rainfall > 10)
+                                                            return "🌧️ Heavy rain - ensure drainage";
+                                                        if (rainfall > 5)
+                                                            return "🌦️ Moderate rain - good for crops";
+                                                        if (rainfall > 0)
+                                                            return "🌤️ Light rain - beneficial";
+                                                        return "☀️ No rain - consider irrigation";
+                                                    })()}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* UV Index if available */}
+                                        {weatherData.uvi !== undefined && (
+                                            <div className="flex items-center">
+                                                <Sun className="w-8 h-8 text-orange-500 mr-3" />
+                                                <div>
+                                                    <p className="text-sm text-gray-600">
+                                                        UV Index
+                                                    </p>
+                                                    <p className="font-bold text-lg">
+                                                        {Math.round(
+                                                            weatherData.uvi
+                                                        )}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {weatherData.uvi < 3
+                                                            ? "Low"
+                                                            : weatherData.uvi <
+                                                              6
+                                                            ? "Moderate"
+                                                            : weatherData.uvi <
+                                                              8
+                                                            ? "High"
+                                                            : "Very High"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Farming Recommendations */}
@@ -434,15 +595,22 @@ const Location = () => {
                     <button
                         onClick={() => {
                             if (selectedLocation) {
-                                // Here you can handle the selected location
-                                console.log(
-                                    "Selected location:",
-                                    selectedLocation
-                                );
-                                // For now, just show an alert
-                                alert(
-                                    `Location confirmed: ${selectedLocation}`
-                                );
+                                // Update location data with selected location
+                                const updatedLocationData = {
+                                    ...detectedLocation,
+                                    selectedLocationString: selectedLocation,
+                                };
+
+                                // Save updated location data
+                                locationStorage.save(updatedLocationData);
+
+                                // Navigate to crop selection
+                                navigate("/crops", {
+                                    state: {
+                                        locationData: updatedLocationData,
+                                        weatherData,
+                                    },
+                                });
                             } else {
                                 alert("Please select a location to continue");
                             }
@@ -450,7 +618,7 @@ const Location = () => {
                         disabled={!selectedLocation}
                         className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Continue
+                        Continue to Crop Selection
                     </button>
                 </div>
             </div>
