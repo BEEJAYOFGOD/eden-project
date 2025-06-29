@@ -1,23 +1,34 @@
-import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import {
+    CheckCircle,
+    XCircle,
+    AlertTriangle,
+    Leaf,
+    Sun,
+    CloudRain,
+} from "lucide-react";
 
 const CropSelectionModal = ({
     isOpen,
     onClose,
-    type = "success", // 'success', 'error', 'warning'
+    type = "success", // 'success', 'error', 'warning', 'positive', 'mixed', 'challenging'
     title,
     message,
     selectedCrops = [],
     onConfirm,
+    conditionDetails = null, // Additional condition details for farming analysis
 }) => {
     if (!isOpen) return null;
 
     const getIcon = () => {
         switch (type) {
             case "success":
+            case "positive":
                 return <CheckCircle className="w-10 h-10 text-white" />;
             case "error":
+            case "challenging":
                 return <XCircle className="w-10 h-10 text-white" />;
             case "warning":
+            case "mixed":
                 return <AlertTriangle className="w-10 h-10 text-white" />;
             default:
                 return <CheckCircle className="w-10 h-10 text-white" />;
@@ -27,11 +38,14 @@ const CropSelectionModal = ({
     const getIconBgColor = () => {
         switch (type) {
             case "success":
-                return "bg-green-500";
+            case "positive":
+                return "bg-green-500"; // Green for positive conditions
             case "error":
-                return "bg-red-500";
+            case "challenging":
+                return "bg-red-500"; // Red for challenging conditions
             case "warning":
-                return "bg-yellow-500";
+            case "mixed":
+                return "bg-amber-600"; // Brown/amber for mixed conditions
             default:
                 return "bg-green-500";
         }
@@ -40,11 +54,14 @@ const CropSelectionModal = ({
     const getButtonColor = () => {
         switch (type) {
             case "success":
+            case "positive":
                 return "bg-green-600 hover:bg-green-700 active:bg-green-800";
             case "error":
+            case "challenging":
                 return "bg-red-600 hover:bg-red-700 active:bg-red-800";
             case "warning":
-                return "bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800";
+            case "mixed":
+                return "bg-amber-600 hover:bg-amber-700 active:bg-amber-800";
             default:
                 return "bg-green-600 hover:bg-green-700 active:bg-green-800";
         }
@@ -72,9 +89,57 @@ const CropSelectionModal = ({
 
                 {/* Message */}
                 <div className="mb-6">
-                    <p className="text-gray-700 text-base leading-relaxed">
-                        {message}
-                    </p>
+                    <div className="text-gray-700 text-sm leading-relaxed text-left">
+                        {message.split("\n").map((line, index) => {
+                            if (line.trim() === "") return <br key={index} />;
+
+                            // Format section headers
+                            if (
+                                line.includes("✅ Favorable Conditions:") ||
+                                line.includes("⚠️ Considerations:") ||
+                                line.includes("💡 Recommendations:")
+                            ) {
+                                return (
+                                    <div
+                                        key={index}
+                                        className="font-semibold text-gray-800 mt-3 mb-1"
+                                    >
+                                        {line}
+                                    </div>
+                                );
+                            }
+
+                            // Format bullet points
+                            if (line.startsWith("• ")) {
+                                return (
+                                    <div
+                                        key={index}
+                                        className="ml-2 mb-1 text-gray-600"
+                                    >
+                                        {line}
+                                    </div>
+                                );
+                            }
+
+                            // Format crop analysis header
+                            if (line.includes("Analysis for ")) {
+                                return (
+                                    <div
+                                        key={index}
+                                        className="font-bold text-gray-900 mb-2"
+                                    >
+                                        {line}
+                                    </div>
+                                );
+                            }
+
+                            return (
+                                <div key={index} className="mb-1">
+                                    {line}
+                                </div>
+                            );
+                        })}
+                    </div>
 
                     {/* Selected Crops List */}
                     {selectedCrops.length > 0 && (

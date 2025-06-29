@@ -21,6 +21,7 @@ import {
     getCurrentMonth,
     determineRegion,
 } from "../utils/calendarRecommendations";
+import { useCropSelectionState } from "../hooks/usePersistedState";
 
 // Import crop images
 import cassavaImg from "../assets/crops/cassava 2.png";
@@ -359,15 +360,18 @@ const CropSelection = () => {
             }
         }
 
-        // Determine overall analysis type
-        if (warnings.length > conditions.length) {
-            analysis.type = "warning";
+        // Determine overall analysis type based on data.json integration
+        const totalFactors = conditions.length + warnings.length;
+        const warningRatio = warnings.length / totalFactors;
+
+        if (warningRatio >= 0.7) {
+            analysis.type = "challenging";
             analysis.title = "Challenging Conditions - Proceed with Caution";
-        } else if (warnings.length > 0) {
-            analysis.type = "warning";
+        } else if (warningRatio >= 0.3) {
+            analysis.type = "mixed";
             analysis.title = "Mixed Conditions - Some Precautions Needed";
         } else {
-            analysis.type = "success";
+            analysis.type = "positive";
             analysis.title = "Excellent Planting Conditions!";
         }
 

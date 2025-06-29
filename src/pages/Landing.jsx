@@ -326,7 +326,7 @@ const Landing = () => {
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">
                             📍 Share Your Location
                         </h3>
-                        <p className="text-gray-600 w-md mx-auto ">
+                        <p className="text-gray-600 w-lg mx-auto ">
                             Tell us your village, LGA, or state.
                             <br /> We'll get weather data for your exact area.
                         </p>
@@ -341,7 +341,7 @@ const Landing = () => {
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">
                             🌾 Choose Your Crops
                         </h3>
-                        <p className="text-gray-600">
+                        <p className="text-gray-600  w-xs mx-auto">
                             Select what you want to grow - maize, rice, cassava,
                             yam, or any other crop.
                         </p>
@@ -356,7 +356,7 @@ const Landing = () => {
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">
                             💬 Get WhatsApp Alerts
                         </h3>
-                        <p className="text-gray-600">
+                        <p className="text-gray-600  w-xs mx-auto">
                             Receive daily tips, weather alerts, and planting
                             advice directly on WhatsApp.
                         </p>
@@ -394,18 +394,6 @@ const Landing = () => {
                                     <span>Start Now - Use My Location</span>
                                 </>
                             )}
-                        </button>
-
-                        <div className="text-green-100 text-sm">
-                            <span>or</span>
-                        </div>
-
-                        <button
-                            onClick={() => setShowWaitlist(true)}
-                            className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors flex items-center gap-2"
-                        >
-                            <MessageCircle className="w-5 h-5" />
-                            <span>Get WhatsApp Alerts</span>
                         </button>
                     </div>
 
