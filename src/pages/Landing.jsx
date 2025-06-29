@@ -22,6 +22,7 @@ import {
     Star,
     ChevronDown,
     Send,
+    Shield,
 } from "lucide-react";
 import edenLogo from "../assets/icons/EDEN LOGO 1.png";
 import blackFarmerImg from "../assets/black farmer.png";
@@ -359,6 +360,68 @@ const Landing = () => {
                             Receive daily tips, weather alerts, and planting
                             advice directly on WhatsApp.
                         </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Start Now Section */}
+            <div className="mb-20 px-4">
+                <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-8 md:p-12 max-w-4xl mx-auto text-center text-white">
+                    <h2 className="text-2xl md:text-3xl font-bold mb-4">
+                        Ready to Start Smart Farming?
+                    </h2>
+                    <p className="text-green-100 text-lg mb-8 max-w-2xl mx-auto">
+                        Join thousands of Nigerian farmers who are already using
+                        EDEN to make better farming decisions. Get personalized
+                        crop recommendations and weather alerts for your exact
+                        location.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                        <button
+                            onClick={getLocation}
+                            disabled={isGettingLocation}
+                            className="bg-white text-green-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[200px] justify-center"
+                        >
+                            {isGettingLocation ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                                    <span>Getting Location...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <MapPin className="w-5 h-5" />
+                                    <span>Start Now - Use My Location</span>
+                                </>
+                            )}
+                        </button>
+
+                        <div className="text-green-100 text-sm">
+                            <span>or</span>
+                        </div>
+
+                        <button
+                            onClick={() => setShowWaitlist(true)}
+                            className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors flex items-center gap-2"
+                        >
+                            <MessageCircle className="w-5 h-5" />
+                            <span>Get WhatsApp Alerts</span>
+                        </button>
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap justify-center gap-6 text-green-100 text-sm">
+                        <div className="flex items-center gap-2">
+                            <Shield className="w-4 h-4" />
+                            <span>100% Free</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            <span>Instant Setup</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            <span>10,000+ Farmers</span>
+                        </div>
                     </div>
                 </div>
             </div>
