@@ -22,7 +22,7 @@ import yamImg from "../assets/crops/yam tubers 2.png";
 const CropSelection = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [selectedCrops, setSelectedCrops] = useState([]);
+    const [selectedCrop, setSelectedCrop] = useState(null);
     const [locationData, setLocationData] = useState(null);
     const [weatherData, setWeatherData] = useState(null);
     const [showModal, setShowModal] = useState(false);
@@ -118,36 +118,33 @@ const CropSelection = () => {
             setWeatherData(storedWeather);
         }
 
-        if (storedCrops) {
-            setSelectedCrops(storedCrops);
+        if (storedCrops && storedCrops.length > 0) {
+            setSelectedCrop(storedCrops[0]); // Take only the first crop
         }
     }, [location.state]);
 
     const toggleCropSelection = (cropId) => {
-        setSelectedCrops((prev) => {
-            const newSelection = prev.includes(cropId)
-                ? prev.filter((id) => id !== cropId)
-                : [...prev, cropId];
+        // If the same crop is clicked, deselect it; otherwise select the new crop
+        const newSelection = selectedCrop === cropId ? null : cropId;
+        setSelectedCrop(newSelection);
 
-            // Save to localStorage
-            cropsStorage.save(newSelection);
-            return newSelection;
-        });
+        // Save to localStorage (as array for compatibility)
+        cropsStorage.save(newSelection ? [newSelection] : []);
     };
 
     const handleContinue = () => {
-        if (selectedCrops.length === 0) {
+        if (!selectedCrop) {
             setModalType("error");
-            setModalTitle("No Crops Selected");
+            setModalTitle("No Crop Selected");
             setModalMessage(
-                "Please select at least one crop to continue with your farming plan."
+                "Please select a crop to continue with your farming plan."
             );
             setShowModal(true);
             return;
         }
 
         // Save final selection
-        cropsStorage.save(selectedCrops);
+        cropsStorage.save([selectedCrop]);
 
         // Check weather conditions and show appropriate modal
         const currentTemp = weatherData?.main?.temp || 25;
@@ -183,7 +180,7 @@ const CropSelection = () => {
             state: {
                 locationData,
                 weatherData,
-                selectedCrops,
+                selectedCrops: selectedCrop ? [selectedCrop] : [],
             },
         });
     };
@@ -284,12 +281,12 @@ const CropSelection = () => {
                                             toggleCropSelection(crop.id)
                                         }
                                         className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                            selectedCrops.includes(crop.id)
+                                            selectedCrop === crop.id
                                                 ? "border-green-500 bg-green-50"
                                                 : "border-gray-200 bg-white hover:border-green-300"
                                         }`}
                                     >
-                                        {selectedCrops.includes(crop.id) && (
+                                        {selectedCrop === crop.id && (
                                             <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
                                                 <Check className="w-4 h-4 text-white" />
                                             </div>
@@ -322,12 +319,12 @@ const CropSelection = () => {
                                 key={crop.id}
                                 onClick={() => toggleCropSelection(crop.id)}
                                 className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                    selectedCrops.includes(crop.id)
+                                    selectedCrop === crop.id
                                         ? "border-green-500 bg-green-50"
                                         : "border-gray-200 bg-white hover:border-green-300"
                                 }`}
                             >
-                                {selectedCrops.includes(crop.id) && (
+                                {selectedCrop === crop.id && (
                                     <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
                                         <Check className="w-4 h-4 text-white" />
                                     </div>
@@ -352,11 +349,13 @@ const CropSelection = () => {
                 </div>
 
                 {/* Selected Count */}
-                {selectedCrops.length > 0 && (
+                {selectedCrop && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
                         <p className="text-blue-700 text-sm text-center">
-                            ✅ {selectedCrops.length} crop
-                            {selectedCrops.length > 1 ? "s" : ""} selected
+                            ✅{" "}
+                            {crops.find((c) => c.id === selectedCrop)?.name ||
+                                selectedCrop}{" "}
+                            selected
                         </p>
                     </div>
                 )}
@@ -364,10 +363,10 @@ const CropSelection = () => {
                 {/* Continue Button */}
                 <button
                     onClick={handleContinue}
-                    disabled={selectedCrops.length === 0}
+                    disabled={!selectedCrop}
                     className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    Continue with Selected Crops
+                    Continue with Selected Crop
                 </button>
             </div>
 
@@ -379,9 +378,14 @@ const CropSelection = () => {
                 type={modalType}
                 title={modalTitle}
                 message={modalMessage}
-                selectedCrops={selectedCrops.map(
-                    (crop) => crops.find((c) => c.id === crop)?.name || crop
-                )}
+                selectedCrops={
+                    selectedCrop
+                        ? [
+                              crops.find((c) => c.id === selectedCrop)?.name ||
+                                  selectedCrop,
+                          ]
+                        : []
+                }
             />
         </div>
     );

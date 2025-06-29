@@ -259,50 +259,50 @@ const Landing = () => {
             </div>
 
             {/* Features Section */}
-            <div className="mb-16">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-12">
-                    Why Nigerian Farmers Love EDEN
+            <div className="mb-20 px-4">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-16">
+                    Why Choose EDEN?
                 </h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="bg-white rounded-xl p-6 shadow-lg text-center">
-                        <div className="text-4xl mb-4">🌧️</div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+                    <div className="bg-white rounded-xl p-8 shadow-lg text-center">
+                        <div className="text-4xl mb-6">🌧️</div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
                             Rainfall Alerts
                         </h3>
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-gray-600 text-sm max-w-xs mx-auto leading-relaxed">
                             Get WhatsApp alerts before rain comes. Plan your
                             planting and harvesting perfectly.
                         </p>
                     </div>
 
-                    <div className="bg-white rounded-xl p-6 shadow-lg text-center">
-                        <div className="text-4xl mb-4">🌱</div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <div className="bg-white rounded-xl p-8 shadow-lg text-center">
+                        <div className="text-4xl mb-6">🌱</div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
                             Planting Advice
                         </h3>
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-gray-600 text-sm max-w-xs mx-auto leading-relaxed">
                             Know exactly when to plant maize, rice, cassava and
                             other crops in your area.
                         </p>
                     </div>
 
-                    <div className="bg-white rounded-xl p-6 shadow-lg text-center">
-                        <div className="text-4xl mb-4">📍</div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <div className="bg-white rounded-xl p-8 shadow-lg text-center">
+                        <div className="text-4xl mb-6">📍</div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
                             Local Forecasts
                         </h3>
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-gray-600 text-sm max-w-xs mx-auto leading-relaxed">
                             Weather predictions specific to your village, LGA,
                             and state.
                         </p>
                     </div>
 
-                    <div className="bg-white rounded-xl p-6 shadow-lg text-center">
-                        <div className="text-4xl mb-4">💬</div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <div className="bg-white rounded-xl p-8 shadow-lg text-center">
+                        <div className="text-4xl mb-6">💬</div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
                             WhatsApp Tips
                         </h3>
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-gray-600 text-sm max-w-xs mx-auto leading-relaxed">
                             Daily farming tips sent to your WhatsApp. No data
                             needed to receive messages.
                         </p>
@@ -313,7 +313,7 @@ const Landing = () => {
             {/* How It Works Section */}
             <div className="mb-16">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-12">
-                    How EDEN Works - Simple as 1, 2, 3!
+                    How EDEN Works
                 </h2>
                 <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
                     <div className="text-center">
@@ -325,9 +325,9 @@ const Landing = () => {
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">
                             📍 Share Your Location
                         </h3>
-                        <p className="text-gray-600">
-                            Tell us your village, LGA, or state. We'll get
-                            weather data for your exact area.
+                        <p className="text-gray-600 w-md mx-auto ">
+                            Tell us your village, LGA, or state.
+                            <br /> We'll get weather data for your exact area.
                         </p>
                     </div>
 
@@ -399,16 +399,16 @@ const Landing = () => {
             </div>
 
             {/* FAQ Section */}
-            <div className="mb-16">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-12">
+            <div className="mb-20 px-4">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-16">
                     Common Questions
                 </h2>
-                <div className="max-w-3xl mx-auto space-y-4">
+                <div className="max-w-3xl mx-auto space-y-6">
                     {[
                         {
                             question:
                                 "Do I need internet to receive WhatsApp messages?",
-                            answer: "No! Once you join our WhatsApp group, you'll receive messages even without internet. WhatsApp works on basic phones and uses very little data.",
+                            answer: "Yes, but very little data is needed. WhatsApp works on basic phones and uses minimal data. Once messages are downloaded, you can read them offline. Perfect for areas with limited connectivity.",
                         },
                         {
                             question: "How much does it cost to use EDEN?",
@@ -416,7 +416,7 @@ const Landing = () => {
                         },
                         {
                             question: "What crops does EDEN support?",
-                            answer: "We support all major Nigerian crops: maize, rice, cassava, yam, millet, sorghum, cowpea, and many more. Just tell us what you grow!",
+                            answer: "Tell us what you want to grow! EDEN provides personalized advice for any crop you choose - from traditional staples like maize, rice, and cassava to specialty crops. Just let us know your farming plans.",
                         },
                         {
                             question:
@@ -431,11 +431,11 @@ const Landing = () => {
                     ].map((faq, index) => (
                         <div
                             key={index}
-                            className="bg-white rounded-lg shadow-sm border"
+                            className="bg-white rounded-xl shadow-sm border mx-2"
                         >
                             <button
                                 onClick={() => toggleFaq(index)}
-                                className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50"
+                                className="w-full px-8 py-6 text-left flex justify-between items-center hover:bg-gray-50 rounded-xl transition-colors"
                             >
                                 <span className="font-medium text-gray-900">
                                     {faq.question}
@@ -447,8 +447,8 @@ const Landing = () => {
                                 />
                             </button>
                             {openFaq === index && (
-                                <div className="px-6 pb-4">
-                                    <p className="text-gray-600">
+                                <div className="px-8 pb-6 pt-2">
+                                    <p className="text-gray-600 leading-relaxed">
                                         {faq.answer}
                                     </p>
                                 </div>
@@ -512,7 +512,7 @@ const Landing = () => {
             </div>
 
             {/* Footer */}
-            <footer className="bg-gray-800 text-white py-12">
+            <footer className="bg-gray-800 text-white py-12 mt-24">
                 <div className="max-w-7xl mx-auto px-4">
                     <div className="grid md:grid-cols-3 gap-8">
                         <div>

@@ -12,14 +12,16 @@ import "./App.css";
 
 function App() {
     return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/location" element={<Location />} />
-                <Route path="/crops" element={<CropSelection />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-        </Router>
+        <div className="bg-white text-gray-900 min-h-screen">
+            <Router>
+                <Routes>
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/location" element={<Location />} />
+                    <Route path="/crops" element={<CropSelection />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </Router>
+        </div>
     );
 }
 
