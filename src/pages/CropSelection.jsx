@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Check, Leaf } from "lucide-react";
+import {
+    ArrowLeft,
+    Check,
+    Leaf,
+    Calendar,
+    MapPin,
+    Thermometer,
+} from "lucide-react";
 import edenLogo from "../assets/icons/EDEN LOGO 1.png";
 import CropSelectionModal from "./modalComponent";
 import {
@@ -8,6 +15,12 @@ import {
     locationStorage,
     weatherStorage,
 } from "../utils/localStorage";
+import {
+    getCalendarBasedRecommendations,
+    getSeasonalInfo,
+    getCurrentMonth,
+    determineRegion,
+} from "../utils/calendarRecommendations";
 
 // Import crop images
 import cassavaImg from "../assets/crops/cassava 2.png";
@@ -29,6 +42,8 @@ const CropSelection = () => {
     const [modalType, setModalType] = useState("success");
     const [modalTitle, setModalTitle] = useState("");
     const [modalMessage, setModalMessage] = useState("");
+    const [calendarRecommendations, setCalendarRecommendations] = useState([]);
+    const [seasonalInfo, setSeasonalInfo] = useState(null);
 
     // Crop data with images and information
     const crops = [
@@ -121,7 +136,22 @@ const CropSelection = () => {
         if (storedCrops && storedCrops.length > 0) {
             setSelectedCrop(storedCrops[0]); // Take only the first crop
         }
-    }, [location.state]);
+
+        // Get calendar-based recommendations when data is available
+        if (weatherData && locationData) {
+            const recommendations = getCalendarBasedRecommendations(
+                locationData,
+                weatherData
+            );
+            setCalendarRecommendations(recommendations);
+
+            const seasonal = getSeasonalInfo(locationData);
+            setSeasonalInfo(seasonal);
+
+            console.log("Calendar recommendations:", recommendations);
+            console.log("Seasonal info:", seasonal);
+        }
+    }, [location.state, weatherData, locationData]);
 
     const toggleCropSelection = (cropId) => {
         // If the same crop is clicked, deselect it; otherwise select the new crop
@@ -190,6 +220,13 @@ const CropSelection = () => {
     };
 
     const getRecommendedCrops = () => {
+        // Use calendar-based recommendations if available
+        if (calendarRecommendations.length > 0) {
+            // Return top 3 calendar-based recommendations
+            return calendarRecommendations.slice(0, 3).map((rec) => rec.id);
+        }
+
+        // Fallback to simple weather-based logic if calendar data not available
         if (!weatherData) return [];
 
         const temp = weatherData.main?.temp || 25;
@@ -263,12 +300,67 @@ const CropSelection = () => {
                     </div>
                 )}
 
+                {/* Seasonal Information */}
+                {seasonalInfo && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Calendar className="w-4 h-4 text-blue-600" />
+                            <h3 className="text-sm font-medium text-blue-800">
+                                {seasonalInfo.currentMonth} •{" "}
+                                {seasonalInfo.region}ern Nigeria
+                            </h3>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs">
+                            {seasonalInfo.isRainySeason && (
+                                <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                    🌧️ Rainy Season
+                                </span>
+                            )}
+                            {seasonalInfo.isFloodRisk && (
+                                <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                                    ⚠️ Flood Risk
+                                </span>
+                            )}
+                            {!seasonalInfo.isRainySeason && (
+                                <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                                    ☀️ Dry Season
+                                </span>
+                            )}
+                        </div>
+                        {weatherData && (
+                            <div className="mt-3 pt-3 border-t border-blue-200">
+                                <div className="flex items-center gap-4 text-xs text-blue-700">
+                                    <span className="flex items-center gap-1">
+                                        <Thermometer className="w-3 h-3" />
+                                        {Math.round(
+                                            weatherData.main?.temp || 0
+                                        )}
+                                        °C
+                                    </span>
+                                    {weatherData.rain?.["1h"] && (
+                                        <span>
+                                            🌧️ {weatherData.rain["1h"]}mm/hr
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Recommended Crops */}
                 {recommendedCrops.length > 0 && (
                     <div className="mb-6">
-                        <h3 className="text-lg font-medium text-gray-800 mb-3">
-                            🌟 Recommended for Your Area
-                        </h3>
+                        <div className="flex items-center gap-2 mb-3">
+                            <h3 className="text-lg font-medium text-gray-800">
+                                🌟 Recommended for Your Area
+                            </h3>
+                            {calendarRecommendations.length > 0 && (
+                                <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded">
+                                    📅 Calendar-based
+                                </span>
+                            )}
+                        </div>
                         <div className="grid grid-cols-2 gap-3">
                             {crops
                                 .filter((crop) =>
@@ -299,9 +391,39 @@ const CropSelection = () => {
                                         <h4 className="font-medium text-gray-800 text-sm text-center mb-1">
                                             {crop.name}
                                         </h4>
-                                        <p className="text-xs text-gray-600 text-center">
+                                        <p className="text-xs text-gray-600 text-center mb-1">
                                             {crop.season}
                                         </p>
+                                        {(() => {
+                                            const calendarCrop =
+                                                calendarRecommendations.find(
+                                                    (rec) => rec.id === crop.id
+                                                );
+                                            if (calendarCrop) {
+                                                return (
+                                                    <div className="text-xs text-center">
+                                                        {calendarCrop.isPlantingMonth && (
+                                                            <span className="bg-green-100 text-green-700 px-1 py-0.5 rounded text-xs">
+                                                                🌱 Plant now!
+                                                            </span>
+                                                        )}
+                                                        {!calendarCrop.isPlantingMonth &&
+                                                            calendarCrop
+                                                                .plantingMonths
+                                                                .length > 0 && (
+                                                                <span className="bg-blue-100 text-blue-700 px-1 py-0.5 rounded text-xs">
+                                                                    📅{" "}
+                                                                    {
+                                                                        calendarCrop
+                                                                            .plantingMonths[0]
+                                                                    }
+                                                                </span>
+                                                            )}
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                     </div>
                                 ))}
                         </div>
