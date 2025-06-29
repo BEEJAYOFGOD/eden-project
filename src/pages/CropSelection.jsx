@@ -176,30 +176,12 @@ const CropSelection = () => {
         // Save final selection
         cropsStorage.save([selectedCrop]);
 
-        // Check weather conditions and show appropriate modal
-        const currentTemp = weatherData?.main?.temp || 25;
-        const rainfall = weatherData?.rain?.["1h"] || 0;
+        // Get detailed analysis for the selected crop
+        const analysis = getDetailedCropAnalysis(selectedCrop);
 
-        if (rainfall > 5) {
-            setModalType("warning");
-            setModalTitle("Heavy Rain Expected");
-            setModalMessage(
-                "There's heavy rainfall expected. Consider waiting for better weather conditions before planting."
-            );
-        } else if (currentTemp < 20 || currentTemp > 35) {
-            setModalType("warning");
-            setModalTitle("Temperature Alert");
-            setModalMessage(
-                "Current temperature conditions may not be ideal for some crops. Please check individual crop requirements."
-            );
-        } else {
-            setModalType("success");
-            setModalTitle("Perfect Planting Conditions!");
-            setModalMessage(
-                "Weather conditions are favorable for planting your selected crops. It's a great time to start farming!"
-            );
-        }
-
+        setModalType(analysis.type);
+        setModalTitle(analysis.title);
+        setModalMessage(analysis.message);
         setShowModal(true);
     };
 
@@ -217,6 +199,206 @@ const CropSelection = () => {
 
     const handleModalClose = () => {
         setShowModal(false);
+    };
+
+    // Detailed crop analysis using calendar data and weather conditions
+    const getDetailedCropAnalysis = (cropId) => {
+        const crop = crops.find((c) => c.id === cropId);
+        const calendarCrop = calendarRecommendations.find(
+            (rec) => rec.id === cropId
+        );
+
+        // Get current weather conditions
+        const currentTemp = weatherData?.main?.temp || 25;
+        const humidity = weatherData?.main?.humidity || 60;
+        const rainfall = weatherData?.rain?.["1h"] || 0;
+        const windSpeed = weatherData?.wind?.speed || 0;
+
+        // Convert hourly rainfall to daily estimate
+        const dailyRainfall = rainfall * 24;
+
+        let analysis = {
+            type: "success",
+            title: "Good Planting Conditions",
+            message: "",
+        };
+
+        let conditions = [];
+        let warnings = [];
+        let recommendations = [];
+
+        // Calendar-based analysis
+        if (calendarCrop) {
+            if (calendarCrop.isPlantingMonth) {
+                conditions.push("🌱 Perfect planting season");
+                recommendations.push(
+                    "This is the optimal time to plant " + crop.name
+                );
+            } else {
+                const nextMonth = calendarCrop.plantingMonths[0];
+                if (nextMonth) {
+                    warnings.push("⏰ Not ideal planting month");
+                    recommendations.push(`Best planting time: ${nextMonth}`);
+                }
+            }
+
+            if (calendarCrop.weatherSuitable) {
+                conditions.push("🌤️ Weather conditions favorable");
+            } else {
+                warnings.push("⚠️ Weather conditions challenging");
+            }
+        }
+
+        // Detailed weather analysis
+        if (currentTemp < 15) {
+            warnings.push(
+                "🥶 Very cold temperature (" + Math.round(currentTemp) + "°C)"
+            );
+            recommendations.push(
+                "Consider greenhouse or wait for warmer weather"
+            );
+        } else if (currentTemp < 20) {
+            warnings.push(
+                "❄️ Cool temperature (" + Math.round(currentTemp) + "°C)"
+            );
+            recommendations.push(
+                "Monitor temperature closely, some crops may grow slowly"
+            );
+        } else if (currentTemp > 35) {
+            warnings.push(
+                "🔥 Very hot temperature (" + Math.round(currentTemp) + "°C)"
+            );
+            recommendations.push(
+                "Ensure adequate irrigation and shade protection"
+            );
+        } else if (currentTemp > 30) {
+            conditions.push(
+                "☀️ Warm temperature (" + Math.round(currentTemp) + "°C)"
+            );
+            recommendations.push(
+                "Good for heat-tolerant crops, ensure adequate watering"
+            );
+        } else {
+            conditions.push(
+                "🌡️ Ideal temperature (" + Math.round(currentTemp) + "°C)"
+            );
+        }
+
+        // Rainfall analysis
+        if (dailyRainfall > 50) {
+            warnings.push(
+                "🌧️ Heavy rainfall expected (" +
+                    Math.round(dailyRainfall) +
+                    "mm/day)"
+            );
+            recommendations.push(
+                "Ensure good drainage, delay planting if soil is waterlogged"
+            );
+        } else if (dailyRainfall > 20) {
+            conditions.push(
+                "🌦️ Moderate rainfall (" + Math.round(dailyRainfall) + "mm/day)"
+            );
+            recommendations.push("Good moisture for germination");
+        } else if (dailyRainfall > 5) {
+            conditions.push(
+                "🌤️ Light rainfall (" + Math.round(dailyRainfall) + "mm/day)"
+            );
+        } else {
+            warnings.push("☀️ No rainfall expected");
+            recommendations.push(
+                "Plan for irrigation, ensure adequate water supply"
+            );
+        }
+
+        // Humidity analysis
+        if (humidity > 80) {
+            warnings.push("💧 High humidity (" + humidity + "%)");
+            recommendations.push(
+                "Watch for fungal diseases, ensure good air circulation"
+            );
+        } else if (humidity < 40) {
+            warnings.push("🏜️ Low humidity (" + humidity + "%)");
+            recommendations.push(
+                "Increase watering frequency, consider mulching"
+            );
+        } else {
+            conditions.push("💨 Good humidity (" + humidity + "%)");
+        }
+
+        // Wind analysis
+        if (windSpeed > 10) {
+            warnings.push(
+                "💨 Strong winds (" + Math.round(windSpeed) + " m/s)"
+            );
+            recommendations.push("Provide wind protection for young plants");
+        } else if (windSpeed > 5) {
+            conditions.push(
+                "🍃 Moderate breeze (" + Math.round(windSpeed) + " m/s)"
+            );
+        }
+
+        // Seasonal considerations
+        if (seasonalInfo) {
+            if (seasonalInfo.isFloodRisk) {
+                warnings.push("🌊 Flood risk period");
+                recommendations.push(
+                    "Choose elevated areas, ensure drainage systems"
+                );
+            }
+
+            if (seasonalInfo.isRainySeason) {
+                conditions.push("🌧️ Rainy season active");
+                recommendations.push(
+                    "Good for rain-fed crops, monitor for excess water"
+                );
+            } else {
+                conditions.push("☀️ Dry season");
+                recommendations.push(
+                    "Irrigation essential, consider drought-resistant varieties"
+                );
+            }
+        }
+
+        // Determine overall analysis type
+        if (warnings.length > conditions.length) {
+            analysis.type = "warning";
+            analysis.title = "Challenging Conditions - Proceed with Caution";
+        } else if (warnings.length > 0) {
+            analysis.type = "warning";
+            analysis.title = "Mixed Conditions - Some Precautions Needed";
+        } else {
+            analysis.type = "success";
+            analysis.title = "Excellent Planting Conditions!";
+        }
+
+        // Build comprehensive message
+        let message = `Analysis for ${crop.name}:\n\n`;
+
+        if (conditions.length > 0) {
+            message += "✅ Favorable Conditions:\n";
+            conditions.forEach((condition) => {
+                message += `• ${condition}\n`;
+            });
+            message += "\n";
+        }
+
+        if (warnings.length > 0) {
+            message += "⚠️ Considerations:\n";
+            warnings.forEach((warning) => {
+                message += `• ${warning}\n`;
+            });
+            message += "\n";
+        }
+
+        if (recommendations.length > 0) {
+            message += "💡 Recommendations:\n";
+            recommendations.forEach((rec) => {
+                message += `• ${rec}\n`;
+            });
+        }
+
+        analysis.message = message;
+        return analysis;
     };
 
     const getRecommendedCrops = () => {
@@ -329,19 +511,134 @@ const CropSelection = () => {
                         </div>
                         {weatherData && (
                             <div className="mt-3 pt-3 border-t border-blue-200">
-                                <div className="flex items-center gap-4 text-xs text-blue-700">
-                                    <span className="flex items-center gap-1">
+                                <h4 className="text-xs font-medium text-blue-800 mb-2">
+                                    Current Weather Details:
+                                </h4>
+                                <div className="grid grid-cols-2 gap-2 text-xs text-blue-700">
+                                    <div className="flex items-center gap-1">
                                         <Thermometer className="w-3 h-3" />
-                                        {Math.round(
-                                            weatherData.main?.temp || 0
-                                        )}
-                                        °C
-                                    </span>
-                                    {weatherData.rain?.["1h"] && (
                                         <span>
-                                            🌧️ {weatherData.rain["1h"]}mm/hr
+                                            {Math.round(
+                                                weatherData.main?.temp || 0
+                                            )}
+                                            °C
                                         </span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <span>💧</span>
+                                        <span>
+                                            {weatherData.main?.humidity || 0}%
+                                            humidity
+                                        </span>
+                                    </div>
+                                    {weatherData.rain?.["1h"] && (
+                                        <div className="flex items-center gap-1">
+                                            <span>🌧️</span>
+                                            <span>
+                                                {weatherData.rain["1h"]}mm/hr
+                                            </span>
+                                        </div>
                                     )}
+                                    {weatherData.wind?.speed && (
+                                        <div className="flex items-center gap-1">
+                                            <span>💨</span>
+                                            <span>
+                                                {Math.round(
+                                                    weatherData.wind.speed
+                                                )}{" "}
+                                                m/s
+                                            </span>
+                                        </div>
+                                    )}
+                                    {weatherData.main?.pressure && (
+                                        <div className="flex items-center gap-1">
+                                            <span>📊</span>
+                                            <span>
+                                                {weatherData.main.pressure} hPa
+                                            </span>
+                                        </div>
+                                    )}
+                                    {weatherData.main?.feels_like && (
+                                        <div className="flex items-center gap-1">
+                                            <span>🌡️</span>
+                                            <span>
+                                                Feels{" "}
+                                                {Math.round(
+                                                    weatherData.main.feels_like
+                                                )}
+                                                °C
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Farming-specific weather insights */}
+                                <div className="mt-2 p-2 bg-blue-100 rounded text-xs">
+                                    <div className="font-medium text-blue-800 mb-1">
+                                        🌾 Farming Insights:
+                                    </div>
+                                    <div className="text-blue-700">
+                                        {(() => {
+                                            const temp =
+                                                weatherData.main?.temp || 25;
+                                            const humidity =
+                                                weatherData.main?.humidity ||
+                                                60;
+                                            const rainfall =
+                                                weatherData.rain?.["1h"] || 0;
+                                            const insights = [];
+
+                                            if (temp >= 20 && temp <= 30) {
+                                                insights.push(
+                                                    "🌱 Ideal temperature for most crops"
+                                                );
+                                            } else if (temp > 30) {
+                                                insights.push(
+                                                    "☀️ Hot - ensure adequate irrigation"
+                                                );
+                                            } else {
+                                                insights.push(
+                                                    "❄️ Cool - growth may be slower"
+                                                );
+                                            }
+
+                                            if (humidity > 70) {
+                                                insights.push(
+                                                    "💧 High humidity - watch for diseases"
+                                                );
+                                            } else if (humidity < 50) {
+                                                insights.push(
+                                                    "🏜️ Low humidity - increase watering"
+                                                );
+                                            } else {
+                                                insights.push(
+                                                    "💨 Good humidity levels"
+                                                );
+                                            }
+
+                                            if (rainfall > 2) {
+                                                insights.push(
+                                                    "🌧️ Heavy rain - check drainage"
+                                                );
+                                            } else if (rainfall > 0) {
+                                                insights.push(
+                                                    "🌦️ Light rain - good for crops"
+                                                );
+                                            } else {
+                                                insights.push(
+                                                    "☀️ No rain - irrigation needed"
+                                                );
+                                            }
+
+                                            return insights.map(
+                                                (insight, index) => (
+                                                    <div key={index}>
+                                                        • {insight}
+                                                    </div>
+                                                )
+                                            );
+                                        })()}
+                                    </div>
                                 </div>
                             </div>
                         )}
